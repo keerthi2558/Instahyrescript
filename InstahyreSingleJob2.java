@@ -49,7 +49,7 @@ public class InstahyreSingleJob2 {
 					}
 				}
 			}
-			if (!loggedInWithCookies) {
+			else if (!loggedInWithCookies) {
 				System.out.println("Performing manual login...");
 				driver.get("https://www.instahyre.com/");
 				driver.findElement(By.id("nav-user-login")).click();
