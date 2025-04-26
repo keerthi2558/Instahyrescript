@@ -10,7 +10,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-public class InstahyreSingleJob2 {
+public class InstahyreAutoApply {
 
 	public static void login(WebDriver driver) throws Exception {
 		String email = "swamymushini@gmail.com";
@@ -76,83 +76,112 @@ public class InstahyreSingleJob2 {
 		}
 	}
 
-	public static void main(String[] args) throws Exception {
-		WebDriver driver = new ChromeDriver();
-		try {
-			login(driver);
-			Thread.sleep(5000);
-			driver.findElement(By.xpath("(//button[@id='interested-btn'])[1]")).click();
-			Thread.sleep(5000);
-			applyJobs(driver);
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			driver.quit();
-		}
-	}
+	public static void main(String[] args) {
+        WebDriver driver = new ChromeDriver();
 
-	private static void applyJobs(WebDriver driver) throws Exception {
-		System.out.println("Started applying");
-		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+        try {
+            login(driver);
+            Thread.sleep(5000);
 
-		try {
-			WebElement experienceElement = wait.until(ExpectedConditions
-					.visibilityOfElementLocated(By.xpath("//span[@class='experience ng-binding ng-scope']")));
-			String experienceText = experienceElement.getText().trim();
+            // check "no matching jobs" BEFORE starting apply
+            if (isNoMatchingJobs(driver)) {
+                System.out.println("No matching jobs found. Exiting...");
+                return;
+            }
 
-			Pattern pattern = Pattern.compile("(\\d+)\\s*-\\s*(\\d+)");
-			Matcher matcher = pattern.matcher(experienceText);
+            // Click first "interested" if available
+            List<WebElement> interestedBtns = driver.findElements(By.id("interested-btn"));
+            if (!interestedBtns.isEmpty()) {
+                interestedBtns.get(0).click();
+                Thread.sleep(3000);
+            }
 
-			System.out.println("Found experience = " + experienceText);
+            applyJobs(driver);
 
-			if (matcher.find()) {
-				int minExp = Integer.parseInt(matcher.group(1));
-				int maxExp = Integer.parseInt(matcher.group(2));
-				String skills = wait
-						.until(ExpectedConditions
-								.visibilityOfElementLocated(By.xpath("//div[contains(@class,'skills-container')]")))
-						.getText();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            driver.quit();
+            System.out.println("Driver closed.");
+        }
+    }
 
-				Set<String> skillsSet = new HashSet<>(Arrays.asList(skills.split("\\n")));
-				if (minExp <= 5 && maxExp >= 5 && skillsSet.contains("Java")) {
-					System.out.println("Skill matches. Applying...");
-					WebElement applyButton = wait.until(
-							ExpectedConditions.elementToBeClickable(By.xpath("//button[contains(text(),'Apply')]")));
-					((JavascriptExecutor) driver).executeScript("arguments[0].click();", applyButton);
+    private static boolean isNoMatchingJobs(WebDriver driver) {
+        try {
+            List<WebElement> noJobsMessages = driver.findElements(
+                    By.xpath("//h6[contains(text(),'no matching opportunities found')]"));
+            return !noJobsMessages.isEmpty() && noJobsMessages.get(0).isDisplayed();
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
-					// WebDriverWait wait2 = new WebDriverWait(driver, Duration.ofSeconds(5));
+    private static void applyJobs(WebDriver driver) throws Exception {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+        System.out.println("Start applying jobs...");
 
-					// Locate the pop-up using its unique ID or class
-					WebElement popup = null;
-					try {
-						popup = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("jobSuggestionPopup")));
-					} catch (Exception e) {
-						System.out.println("No pop-up appeared.");
-					}
+        while (true) { 
+            try {
+                if (isNoMatchingJobs(driver)) {
+                    System.out.println("No more matching jobs. Exiting apply loop...");
+                    break;
+                }
 
-					// If pop-up is present, close it
-					if (popup != null && popup.isDisplayed()) {
-						System.out.println("Pop-up detected!");
+                WebElement experienceElement = wait.until(ExpectedConditions
+                        .visibilityOfElementLocated(By.xpath("//span[contains(@class,'experience')]")));
+                String experienceText = experienceElement.getText().trim();
+                System.out.println("Experience found: " + experienceText);
 
-						// Click the close button inside the pop-up
-						driver.findElement(By.xpath("//button[text()='Close']")).click();
+                Pattern pattern = Pattern.compile("(\\d+)\\s*-\\s*(\\d+)");
+                Matcher matcher = pattern.matcher(experienceText);
 
-						System.out.println("Pop-up closed successfully!");
-					}
-				} else {
-					System.out.println("Not interested.");
-					WebElement notInterestedButton = wait.until(ExpectedConditions
-							.elementToBeClickable(By.xpath("//button[contains(text(),'Not interested')]")));
-					((JavascriptExecutor) driver).executeScript("arguments[0].click();", notInterestedButton);
-				}
-				System.out.println(skills);
-			}
-		} catch (NoSuchElementException | TimeoutException e) {
-			System.out.println("Could not find job application elements: " + e.getMessage());
-		}
+                if (matcher.find()) {
+                    int minExp = Integer.parseInt(matcher.group(1));
+                    int maxExp = Integer.parseInt(matcher.group(2));
+                    String skills = wait.until(ExpectedConditions
+                            .visibilityOfElementLocated(By.xpath("//div[contains(@class,'skills-container')]"))).getText();
+                    Set<String> skillsSet = new HashSet<>(Arrays.asList(skills.split("\\n")));
 
-		Thread.sleep(5000);
-		applyJobs(driver);
+                    if (minExp <= 5 && maxExp >= 5 && skillsSet.contains("Java")) {
+                        System.out.println("Skills match. Applying...");
+                        WebElement applyButton = wait.until(ExpectedConditions
+                                .elementToBeClickable(By.xpath("//button[contains(text(),'Apply')]")));
+                        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", applyButton);
+                    } else {
+                        System.out.println("Skills do not match. Skipping...");
+                        WebElement notInterestedButton = wait.until(ExpectedConditions
+                                .elementToBeClickable(By.xpath("//button[contains(text(),'Not interested')]")));
+                        ((JavascriptExecutor) driver).executeScript("arguments[0].click();", notInterestedButton);
+                    }
 
-	}
+                    // Handle popup if appears
+                    handlePopup(driver);
+
+                } else {
+                    System.out.println("Could not parse experience.");
+                }
+
+            } catch (TimeoutException e) {
+                System.out.println("Timeout waiting for elements. Skipping this job...");
+            } catch (NoSuchElementException e) {
+                System.out.println("No more jobs visible. Exiting...");
+                break;
+            }
+
+            Thread.sleep(3000);
+        }
+    }
+
+    private static void handlePopup(WebDriver driver) {
+        try {
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
+            WebElement popup = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("jobSuggestionPopup")));
+            if (popup.isDisplayed()) {
+                System.out.println("Popup detected. Closing...");
+                driver.findElement(By.xpath("//button[text()='Close']")).click();
+            }
+        } catch (TimeoutException e) {
+            // No popup appeared
+        }
+    }
 }
