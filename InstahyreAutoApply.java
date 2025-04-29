@@ -12,44 +12,54 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class InstahyreAutoApply {
 
-	public static void login(WebDriver driver) throws Exception {
+	public static void login(WebDriver driver) {
 		String email = "swamymushini@gmail.com";
 		String password = "ieNEWSS3**20242025";
 		String cookiesFile = "cookies.data";
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
 		driver.manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
 		driver.manage().window().maximize();
-		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-		File file = new File(cookiesFile);
-		boolean loggedInWithCookies = false;
 
 		driver.get("https://www.instahyre.com/");
 
-		try {
-			if (file.exists()) {
-				// Load cookies from file
-				try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(cookiesFile))) {
-					@SuppressWarnings("unchecked")
-					Set<Cookie> cookies = (Set<Cookie>) ois.readObject();
+		boolean loggedIn = false;
 
-					for (Cookie cookie : cookies) {
-						// Skip expired cookies
-						if (cookie.getExpiry() == null || cookie.getExpiry().after(new Date())) {
-							driver.manage().addCookie(cookie);
-						}
-					}
-
-					driver.navigate().refresh(); // Apply cookies
-					Thread.sleep(3000); // Wait a bit after refreshing
-
-					// Check if logged in successfully (use element unique to logged-in state)
-					if (driver.getCurrentUrl().contains("dashboard") || driver.getPageSource().contains("My Profile")) {
-						System.out.println("Logged in using cookies.");
-						loggedInWithCookies = true;
+		// Try loading cookies
+		File file = new File(cookiesFile);
+		if (file.exists()) {
+			try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+				String line;
+				while ((line = reader.readLine()) != null) {
+					String[] parts = line.split(";");
+					if (parts.length == 6) {
+						String name = parts[0];
+						String value = parts[1];
+						String domain = parts[2];
+						String path = parts[3];
+						boolean isSecure = Boolean.parseBoolean(parts[4]);
+						long expiry = Long.parseLong(parts[5]);
+						Date expiryDate = new Date(expiry);
+						Cookie cookie = new Cookie.Builder(name, value).domain(domain).path(path).expiresOn(expiryDate)
+								.isSecure(isSecure).build();
+						driver.manage().addCookie(cookie);
 					}
 				}
+				driver.navigate().refresh();
+				Thread.sleep(3000);
+
+				if (driver.getCurrentUrl().contains("dashboard") || driver.getPageSource().contains("My Profile")) {
+					System.out.println("Logged in using saved cookies.");
+					loggedIn = true;
+				}
+			} catch (Exception e) {
+				System.out.println("Failed to load cookies. Will try manual login.");
 			}
-			else if (!loggedInWithCookies) {
+		}
+
+		// Manual login if cookie login failed
+		if (!loggedIn) {
+			try {
 				System.out.println("Performing manual login...");
 				driver.get("https://www.instahyre.com/");
 				driver.findElement(By.id("nav-user-login")).click();
@@ -59,20 +69,38 @@ public class InstahyreAutoApply {
 				driver.findElement(By.id("password")).sendKeys(password);
 				driver.findElement(By.xpath("(//button[@type='submit'])[1]")).click();
 
-				// Wait for dashboard or logged-in element
-				wait.until(ExpectedConditions.urlContains("candidate/opportunities/?matching=true"));
+				wait.until(ExpectedConditions.urlContains("candidate/opportunities"));
 
+				// Save cookies to file
 				Set<Cookie> cookies = driver.manage().getCookies();
-
-				try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(cookiesFile))) {
-					oos.writeObject(cookies);
+				try (BufferedWriter writer = new BufferedWriter(new FileWriter(cookiesFile))) {
+					for (Cookie cookie : cookies) {
+						writer.write(String.format("%s;%s;%s;%s;%s;%d\n", cookie.getName(), cookie.getValue(),
+								cookie.getDomain(), cookie.getPath(), cookie.isSecure(),
+								cookie.getExpiry() != null ? cookie.getExpiry().getTime() : 0));
+					}
 				}
 
-				System.out.println("Logged in and cookies saved.");
+				System.out.println("Manual login successful. Cookies saved.");
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println("Manual login failed.");
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.out.println("Login failed.");
+		}
+	}
+
+	public static void main1(String[] args) {
+		System.setProperty("webdriver.chrome.driver",
+				"C:\\Users\\PRIYANKA\\eclipse-workspace\\Introduction\\chromedriver.exe");
+		ChromeOptions options = new ChromeOptions();
+		// options.addArguments("--headless"); // Uncomment for Jenkins/headless runs
+		WebDriver driver = new ChromeDriver(options);
+
+		try {
+			login(driver);
+			// Continue with job applications...
+		} finally {
+			driver.quit();
 		}
 	}
 
