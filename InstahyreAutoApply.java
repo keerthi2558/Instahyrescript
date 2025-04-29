@@ -93,7 +93,7 @@ public class InstahyreAutoApply {
 		System.setProperty("webdriver.chrome.driver",
 				"C:\\Users\\PRIYANKA\\eclipse-workspace\\Introduction\\chromedriver.exe");
 		ChromeOptions options = new ChromeOptions();
-		 options.addArguments("--headless"); // Uncomment for Jenkins/headless runs
+		// options.addArguments("--headless"); // Uncomment for Jenkins/headless runs
 		WebDriver driver = new ChromeDriver(options);
 
 		try {
