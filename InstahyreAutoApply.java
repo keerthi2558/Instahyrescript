@@ -89,20 +89,20 @@ public class InstahyreAutoApply {
 		}
 	}
 
-	public static void main1(String[] args) {
-		System.setProperty("webdriver.chrome.driver",
-				"C:\\Users\\PRIYANKA\\eclipse-workspace\\Introduction\\chromedriver.exe");
-		ChromeOptions options = new ChromeOptions();
-		// options.addArguments("--headless"); // Uncomment for Jenkins/headless runs
-		WebDriver driver = new ChromeDriver(options);
+	// public static void main1(String[] args) {
+	// 	System.setProperty("webdriver.chrome.driver",
+	// 			"C:\\Users\\PRIYANKA\\eclipse-workspace\\Introduction\\chromedriver.exe");
+	// 	ChromeOptions options = new ChromeOptions();
+	// 	// options.addArguments("--headless"); // Uncomment for Jenkins/headless runs
+	// 	WebDriver driver = new ChromeDriver(options);
 
-		try {
-			login(driver);
-			// Continue with job applications...
-		} finally {
-			driver.quit();
-		}
-	}
+	// 	try {
+	// 		login(driver);
+	// 		// Continue with job applications...
+	// 	} finally {
+	// 		driver.quit();
+	// 	}
+	// }
 
 	public static void main(String[] args) {
         WebDriver driver = new ChromeDriver();
