@@ -80,6 +80,8 @@ public class InstahyreAutoApply {
 		try {
 			login(driver);
 			Thread.sleep(5000);
+			WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+			wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@id='interested-btn']")));
 
 			// Check for the presence of the "interested" button before clicking
 			List<WebElement> interestedButtons = driver.findElements(By.xpath("//button[@id='interested-btn']"));
