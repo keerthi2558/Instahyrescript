@@ -136,16 +136,23 @@ public class InstahyreAutoApply {
 						((JavascriptExecutor) driver).executeScript("arguments[0].click();", applyButton);
 
 						try {
-							WebElement popup = wait
-									.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//h4[contains(text(),'Want to apply to other similar jobs')]")));
+							// Wait up to 5 seconds for popup to appear
+							WebDriverWait popupWait = new WebDriverWait(driver, Duration.ofSeconds(5));
+							WebElement popup = popupWait.until(ExpectedConditions.visibilityOfElementLocated(
+									By.xpath("//h4[contains(text(),'Want to apply to other similar jobs')]")));
+
 							if (popup.isDisplayed()) {
 								System.out.println("Pop-up detected!");
-								driver.findElement(By.xpath("//button[text()='Apply']")).click();
-								System.out.println("Applied Pop-up job successfully!");
+								WebElement applyBtn = popup.findElement(By.xpath("//button[text()='Apply']"));
+								((JavascriptExecutor) driver).executeScript("arguments[0].click();", applyBtn);
+								System.out.println("Applied Pop-up Job successfully!");
 							}
 						} catch (TimeoutException te) {
 							System.out.println("No pop-up appeared.");
+						} catch (NoSuchElementException ne) {
+							System.out.println("Pop-up appeared but button not found: " + ne.getMessage());
 						}
+
 					} else {
 						System.out.println("Not interested.");
 						WebElement notInterestedButton = wait.until(ExpectedConditions
