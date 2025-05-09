@@ -79,6 +79,9 @@ public class InstahyreAutoApply {
 		WebDriver driver = new ChromeDriver();
 		try {
 			login(driver);
+			System.out.println("=== PAGE SOURCE START ===");
+System.out.println(driver.getPageSource());
+System.out.println("=== PAGE SOURCE END ===");
 			Thread.sleep(5000);
 			WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 			wait.until(ExpectedConditions.elementToBeClickable(By.xpath("//button[@id='interested-btn']")));
