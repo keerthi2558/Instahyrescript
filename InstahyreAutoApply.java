@@ -137,11 +137,11 @@ public class InstahyreAutoApply {
 
 						try {
 							WebElement popup = wait
-									.until(ExpectedConditions.visibilityOfElementLocated(By.id("jobSuggestionPopup")));
+									.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//h4[contains(text(),'Want to apply to other similar jobs')]")));
 							if (popup.isDisplayed()) {
 								System.out.println("Pop-up detected!");
 								driver.findElement(By.xpath("//button[text()='Apply']")).click();
-								System.out.println("Pop-up closed successfully!");
+								System.out.println("Applied Pop-up job successfully!");
 							}
 						} catch (TimeoutException te) {
 							System.out.println("No pop-up appeared.");
